@@ -1,0 +1,326 @@
+/* Navbar Styles */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 1.2rem 2rem;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.navbar.scrolled {
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 0.8rem 2rem;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+/* Logo Styles */
+.nav-logo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-decoration: none;
+  position: relative;
+  z-index: 1001;
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec489a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  letter-spacing: -0.5px;
+}
+
+.logo-text::before {
+  content: '{ }';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-logo:hover .logo-text::before {
+  opacity: 0.7;
+}
+
+/* Navigation Menu */
+.nav-menu {
+  display: flex;
+  list-style: none;
+  gap: 2.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-menu li {
+  position: relative;
+}
+
+.nav-menu a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 0.5rem 0;
+  letter-spacing: 0.3px;
+}
+
+/* Underline Animation */
+.nav-menu a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
+  transition: width 0.3s ease;
+}
+
+.nav-menu a:hover::after,
+.nav-menu a.active::after {
+  width: 100%;
+}
+
+.nav-menu a:hover {
+  color: #a855f7;
+}
+
+/* Active Link Styling */
+.nav-menu a.active {
+  color: #a855f7;
+}
+
+/* Admin Link Special Styling */
+.nav-menu a[href="/admin"] {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(217, 70, 239, 0.1));
+  padding: 0.5rem 1.2rem !important;
+  border-radius: 50px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  transition: all 0.3s ease;
+}
+
+.nav-menu a[href="/admin"]::after {
+  display: none;
+}
+
+.nav-menu a[href="/admin"]:hover {
+  background: linear-gradient(135deg, #a855f7, #d946ef);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(168, 85, 247, 0.3);
+  border-color: transparent;
+}
+
+/* Mobile Menu Button (Hamburger) */
+.menu-icon {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  z-index: 1001;
+  gap: 5px;
+}
+
+.menu-icon span {
+  width: 25px;
+  height: 3px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.menu-icon.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+  background: #a855f7;
+}
+
+.menu-icon.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-icon.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+  background: #a855f7;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem;
+  }
+
+  .navbar.scrolled {
+    padding: 0.8rem 1rem;
+  }
+
+  .menu-icon {
+    display: flex;
+  }
+
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100vh;
+    background: rgba(10, 10, 15, 0.98);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: right 0.4s ease-in-out;
+    gap: 2rem;
+  }
+
+  .nav-menu.active {
+    right: 0;
+  }
+
+  .nav-menu li {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.3s ease;
+  }
+
+  .nav-menu.active li {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .nav-menu.active li:nth-child(1) { transition-delay: 0.1s; }
+  .nav-menu.active li:nth-child(2) { transition-delay: 0.2s; }
+  .nav-menu.active li:nth-child(3) { transition-delay: 0.3s; }
+  .nav-menu.active li:nth-child(4) { transition-delay: 0.4s; }
+
+  .nav-menu a {
+    font-size: 1.5rem;
+    padding: 0.8rem 0;
+  }
+
+  .nav-menu a::after {
+    height: 3px;
+  }
+
+  .nav-menu a[href="/admin"] {
+    padding: 0.8rem 1.5rem !important;
+    font-size: 1.3rem;
+  }
+}
+
+/* Animation for mobile menu items */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Optional: Add a subtle glow effect on scroll */
+.navbar.scrolled .nav-menu a {
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+/* Logo Animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    text-shadow: 0 0 0px rgba(168, 85, 247, 0);
+  }
+  50% {
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+  }
+}
+
+.nav-logo:hover .logo-text {
+  animation: pulseGlow 1s ease-in-out infinite;
+}
+
+/* Optional: Add a gradient border on scroll */
+.navbar.scrolled {
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, #a855f7, #d946ef, transparent);
+  border-image-slice: 1;
+}
+
+/* Custom scrollbar for mobile menu */
+@media (max-width: 768px) {
+  .nav-menu.active {
+    overflow-y: auto;
+  }
+  
+  .nav-menu.active::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .nav-menu.active::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .nav-menu.active::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #a855f7, #d946ef);
+    border-radius: 5px;
+  }
+}
+/* Add this to your existing Navbar.css */
+
+/* Admin Link Special Styling */
+.nav-menu a.admin-link {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(217, 70, 239, 0.2));
+  padding: 0.5rem 1.2rem !important;
+  border-radius: 50px;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-menu a.admin-link::after {
+  display: none;
+}
+
+.nav-menu a.admin-link::before {
+  content: '🔒';
+  margin-right: 8px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.nav-menu a.admin-link:hover {
+  background: linear-gradient(135deg, #a855f7, #d946ef);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+  border-color: transparent;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .nav-menu a.admin-link {
+    padding: 0.8rem 1.5rem !important;
+    font-size: 1.3rem;
+  }
+  
+  .nav-menu a.admin-link::before {
+    font-size: 1.2rem;
+  }
+}
