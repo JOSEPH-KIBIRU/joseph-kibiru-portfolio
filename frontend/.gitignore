@@ -3,59 +3,36 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# Build output
+build/
+dist/
+
 # Environment variables
 .env
 .env.local
 .env.production
 .env.development
 
-# Uploads and media
-uploads/
-public/uploads/
-media/
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webp
-*.mp4
-*.mov
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
 # IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# Build files
-dist/
-build/
+# OS files
+.DS_Store
+Thumbs.db
 
 # Testing
 coverage/
 .nyc_output/
 
-# Temporary files
-tmp/
-temp/
+# Logs
+*.log
+npm-debug.log*
 
-# Scripts folder (contains admin creation scripts)
-scripts/
-*.sh
-
-# Script outputs
-*.output
-*.result
+# Don't ignore profile picture
+!public/profile.jpg
+!public/profile.jpeg
+!public/profile.png
+!public/favicon.ico
