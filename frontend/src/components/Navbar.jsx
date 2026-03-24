@@ -24,7 +24,7 @@ const Navbar = () => {
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-container">
         <Link to="/" className="nav-logo">
-          <span className="logo-text">Joseph Kibiru</span>
+          <span className="logo-text">JK</span>
         </Link>
 
         {/* Hamburger Menu Icon */}
