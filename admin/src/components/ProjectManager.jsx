@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import ProjectForm from './ProjectForm';
-import './ProjectManager.css';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import ProjectForm from "./ProjectForm";
+import "./ProjectManager.css";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const ProjectManager = ({ onLogout }) => {
   const [projects, setProjects] = useState([]);
   const [editingProject, setEditingProject] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchProjects();
@@ -22,10 +22,10 @@ const ProjectManager = ({ onLogout }) => {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/projects`);
       setProjects(response.data);
-      setError('');
+      setError("");
     } catch (error) {
-      console.error('Error fetching projects:', error);
-      setError('Failed to load projects. Please try again.');
+      console.error("Error fetching projects:", error);
+      setError("Failed to load projects. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -42,30 +42,32 @@ const ProjectManager = ({ onLogout }) => {
 
     // Update order in backend
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("adminToken");
       await axios.post(
         `${API_URL}/api/admin/projects/reorder`,
         { projects: items },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
     } catch (error) {
-      console.error('Error reordering projects:', error);
+      console.error("Error reordering projects:", error);
       // Revert on error
       fetchProjects();
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
+    if (window.confirm("Are you sure you want to delete this project?")) {
       try {
-        const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("adminToken");
         await axios.delete(`${API_URL}/api/admin/projects/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         fetchProjects();
       } catch (error) {
-        console.error('Error deleting project:', error);
-        alert('Failed to delete project. Please try again.');
+        console.error("Error deleting project:", error);
+        alert("Failed to delete project. Please try again.");
       }
     }
   };
@@ -116,7 +118,10 @@ const ProjectManager = ({ onLogout }) => {
             >
               {projects.length === 0 ? (
                 <div className="no-projects">
-                  <p>No projects yet. Click "Add New Project" to create your first project!</p>
+                  <p>
+                    No projects yet. Click "Add New Project" to create your
+                    first project!
+                  </p>
                 </div>
               ) : (
                 projects.map((project, index) => (
@@ -127,18 +132,21 @@ const ProjectManager = ({ onLogout }) => {
                   >
                     {(provided, snapshot) => (
                       <div
-                        className={`project-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                        className={`project-item ${snapshot.isDragging ? "dragging" : ""}`}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                       >
-                        <div className="drag-handle" {...provided.dragHandleProps}>
+                        <div
+                          className="drag-handle"
+                          {...provided.dragHandleProps}
+                        >
                           ⋮⋮
                         </div>
-                        
+
                         <div className="project-preview">
                           {project.imageUrl && (
-                            <img 
-                              src={`${API_URL}${project.imageUrl}`} 
+                            <img
+                              src={`${API_URL}${project.imageUrl}`}
                               alt={project.title}
                               className="project-thumbnail"
                             />
@@ -152,30 +160,46 @@ const ProjectManager = ({ onLogout }) => {
                               <span className="featured-badge">Featured</span>
                             )}
                           </div>
-                          <p className="project-description">{project.description}</p>
+                          <p className="project-description">
+                            {project.description}
+                          </p>
                           <div className="project-tags">
-                            {project.technologies?.map(tech => (
-                              <span key={tech} className="tech-tag">{tech}</span>
+                            {project.technologies?.map((tech) => (
+                              <span key={tech} className="tech-tag">
+                                {tech}
+                              </span>
                             ))}
                           </div>
                           <div className="project-links">
                             {project.liveUrl && (
-                              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">Live Demo</a>
+                              <a
+                                href={project.liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Live Demo
+                              </a>
                             )}
                             {project.githubUrl && (
-                              <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">GitHub</a>
+                              <a
+                                href={project.githubUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                GitHub
+                              </a>
                             )}
                           </div>
                         </div>
 
                         <div className="project-actions">
-                          <button 
+                          <button
                             onClick={() => handleEdit(project)}
                             className="btn-edit"
                           >
                             Edit
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDelete(project._id)}
                             className="btn-delete"
                           >
@@ -194,10 +218,7 @@ const ProjectManager = ({ onLogout }) => {
       </DragDropContext>
 
       {showForm && (
-        <ProjectForm
-          project={editingProject}
-          onClose={handleFormClose}
-        />
+        <ProjectForm project={editingProject} onClose={handleFormClose} />
       )}
     </div>
   );

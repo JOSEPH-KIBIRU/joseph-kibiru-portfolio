@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './ProjectForm.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const ProjectForm = ({ project, onClose }) => {
   const [formData, setFormData] = useState({
     title: project?.title || '',
@@ -13,7 +15,7 @@ const ProjectForm = ({ project, onClose }) => {
     featured: project?.featured || false
   });
   const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(project?.imageUrl ? `http://localhost:5000${project.imageUrl}` : null);
+  const [imagePreview, setImagePreview] = useState(project?.imageUrl ? `${API_URL}${project.imageUrl}` : null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -53,7 +55,7 @@ const ProjectForm = ({ project, onClose }) => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
       const formDataToSend = new FormData();
 
       // Prepare project data
@@ -69,10 +71,13 @@ const ProjectForm = ({ project, onClose }) => {
       }
 
       const url = project
-        ? `http://localhost:5000/api/admin/projects/${project._id}`
-        : 'http://localhost:5000/api/admin/projects';
+        ? `${API_URL}/api/admin/projects/${project._id}`
+        : `${API_URL}/api/admin/projects`;
 
       const method = project ? 'put' : 'post';
+
+      console.log('Saving to:', url);
+      console.log('Using API_URL:', API_URL);
 
       await axios({
         method,
@@ -87,6 +92,7 @@ const ProjectForm = ({ project, onClose }) => {
       onClose();
     } catch (error) {
       console.error('Error saving project:', error);
+      console.error('Error details:', error.response?.data);
       setError(error.response?.data?.error || 'Failed to save project. Please try again.');
     } finally {
       setLoading(false);
