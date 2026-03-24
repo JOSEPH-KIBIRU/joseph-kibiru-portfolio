@@ -11,12 +11,42 @@ require('dotenv').config();
 const app = express();
 
 // CORS configuration for production
+// Update CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  process.env.FRONTEND_URL,
-  process.env.ADMIN_URL
+  'https://josephkibiruportfolio.netlify.app',  // Remove trailing slash
+  'https://joseph-kibiru-admin.vercel.app'
 ].filter(Boolean);
+
+console.log('Allowed origins:', allowedOrigins);
+
+app.use(cors({
+  origin: function(origin, callback) {
+    console.log('Request from origin:', origin);
+    
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    // Remove trailing slash for comparison
+    const cleanOrigin = origin.replace(/\/$/, '');
+    
+    // Check if origin is allowed
+    if (allowedOrigins.indexOf(cleanOrigin) !== -1 || 
+        allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    
+    // In development, allow all
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    console.log('CORS blocked origin:', origin);
+    return callback(new Error('CORS policy does not allow access from this origin'), false);
+  },
+  credentials: true
+}));
 
 app.use(cors({
   origin: function(origin, callback) {
