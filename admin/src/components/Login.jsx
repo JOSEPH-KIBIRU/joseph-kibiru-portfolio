@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
-    email: '', // Changed from username to email
+    email: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -23,13 +25,18 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', credentials.email);
       
-      const response = await axios.post('http://localhost:5000/api/login', {
-        email: credentials.email,    // Make sure we're sending email
+      const response = await axios.post(`${API_URL}/api/login`, {
+        email: credentials.email,
         password: credentials.password
       });
       
       if (response.data.success) {
+        console.log('Login successful!');
+        // Store token
+        localStorage.setItem('adminToken', response.data.token);
+        localStorage.setItem('token', response.data.token);
         onLogin(response.data.token);
       }
     } catch (error) {
@@ -44,8 +51,8 @@ const Login = ({ onLogin }) => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Welcome Back</h1>
-          <p className="login-subtitle">Sign in to access the admin dashboard</p>
+          <h1>Admin Dashboard</h1>
+          <p className="login-subtitle">Sign in to manage your portfolio</p>
         </div>
         
         {error && <div className="error-message">{error}</div>}
@@ -61,7 +68,7 @@ const Login = ({ onLogin }) => {
               <input
                 type="email"
                 id="email"
-                name="email"           // Name must be "email"
+                name="email"
                 value={credentials.email}
                 onChange={handleChange}
                 required
@@ -105,7 +112,7 @@ const Login = ({ onLogin }) => {
         </form>
         
         <div className="login-footer">
-          <p>Secure admin access only</p>
+          <p>Portfolio Admin Dashboard</p>
         </div>
       </div>
     </div>

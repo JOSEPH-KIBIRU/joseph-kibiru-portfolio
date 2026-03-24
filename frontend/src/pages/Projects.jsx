@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import './Projects.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +24,7 @@ const Projects = () => {
 
   const fetchProjects = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/projects');
+      const response = await axios.get(`${API_URL}/api/projects`);
       setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -46,7 +48,6 @@ const Projects = () => {
           My Projects
         </motion.h1>
 
-        {/* Filter Buttons */}
         {categories.length > 0 && (
           <motion.div 
             className="filter-buttons"
@@ -66,7 +67,6 @@ const Projects = () => {
           </motion.div>
         )}
 
-        {/* Projects Grid */}
         {loading ? (
           <div className="loading">Loading projects...</div>
         ) : (
@@ -86,7 +86,7 @@ const Projects = () => {
               >
                 <div className="project-image">
                   <img 
-                    src={project.imageUrl ? `http://localhost:5000${project.imageUrl}` : 'https://via.placeholder.com/600x400'} 
+                    src={project.imageUrl ? `${API_URL}${project.imageUrl}` : 'https://via.placeholder.com/600x400'} 
                     alt={project.title} 
                   />
                   <div className="project-overlay">

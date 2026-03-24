@@ -4,26 +4,31 @@ import Login from './components/Login';
 import ProjectManager from './components/ProjectManager';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Check for token in localStorage (from main portfolio login)
+      // Check for token in localStorage
       const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       
+      console.log('Checking auth, token found:', !!token);
       
       if (token) {
         try {
           // Verify token with backend
-          const response = await axios.get('http://localhost:5000/api/verify-token', {
+          const response = await axios.get(`${API_URL}/api/verify-token`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           
           if (response.data.valid) {
+            console.log('Token valid, setting authenticated to true');
             setIsAuthenticated(true);
           } else {
+            console.log('Token invalid');
             localStorage.removeItem('adminToken');
             localStorage.removeItem('token');
           }

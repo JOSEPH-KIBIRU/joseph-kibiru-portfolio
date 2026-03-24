@@ -4,6 +4,10 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import './AdminLogin.css';
 
+// Get API URL from environment variable
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const ADMIN_DASHBOARD_URL = process.env.REACT_APP_ADMIN_URL || 'http://localhost:3001';
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
@@ -28,19 +32,20 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/login', {
+      const response = await axios.post(`${API_URL}/api/login`, {
         email: credentials.email,
         password: credentials.password
       });
       
       if (response.data.success) {
-        // Store token for the admin dashboard
+        // Store token
         localStorage.setItem('adminToken', response.data.token);
         localStorage.setItem('token', response.data.token);
         
+        console.log('Login successful! Opening admin dashboard...');
         
         // Open admin dashboard in new tab
-        const adminWindow = window.open('http://localhost:3001', '_blank');
+        const adminWindow = window.open(ADMIN_DASHBOARD_URL, '_blank');
         
         if (adminWindow) {
           setSuccess('Login successful! Admin dashboard opened in new tab.');
@@ -62,7 +67,7 @@ const AdminLogin = () => {
   };
 
   const openAdminDashboard = () => {
-    window.open('http://localhost:3001', '_blank');
+    window.open(ADMIN_DASHBOARD_URL, '_blank');
   };
 
   return (

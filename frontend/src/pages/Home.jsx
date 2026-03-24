@@ -3,9 +3,8 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import './Home.css';
 
-// Import your profile picture - put your image in the public folder
-// For example: public/profile.jpg
-const profilePic = '/profile.jpeg'; // Change this to your actual image path
+// Get API URL from environment variable
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const Home = () => {
   const [featuredProjects, setFeaturedProjects] = useState([]);
@@ -17,7 +16,7 @@ const Home = () => {
 
   const fetchFeaturedProjects = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/projects/featured');
+      const response = await axios.get(`${API_URL}/api/projects/featured`);
       setFeaturedProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -34,18 +33,16 @@ const Home = () => {
     { name: 'TypeScript', level: 75 },
     { name: 'Next.js', level: 70 },
     { name: 'PostgreSQL', level: 75 },
+    { name: 'AWS', level: 65 },
     { name: 'Supabase', level: 90 },
   ];
 
   return (
     <div className="home">
       
-      
-      {/* Hero Section */}
       <section className="hero">
         <div className="hero-content">
           <div className="hero-grid">
-            {/* Left side - Text Content */}
             <motion.div
               className="hero-text"
               initial={{ opacity: 0, x: -20 }}
@@ -98,7 +95,6 @@ const Home = () => {
               </motion.div>
             </motion.div>
 
-            {/* Right side - Profile Image */}
             <motion.div
               className="hero-image"
               initial={{ opacity: 0, scale: 0.8 }}
@@ -108,7 +104,7 @@ const Home = () => {
               <div className="image-wrapper">
                 <div className="image-glow"></div>
                 <img 
-                  src={profilePic} 
+                  src="/profile.jpeg" 
                   alt="Joseph Kibiru" 
                   className="profile-image"
                 />
@@ -134,7 +130,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Skills Section */}
       <section className="skills">
         <div className="container">
           <motion.div
@@ -177,7 +172,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Projects */}
       <section className="featured-projects">
         <div className="container">
           <motion.div
@@ -208,7 +202,7 @@ const Home = () => {
                 >
                   <div className="project-image">
                     <img 
-                      src={project.imageUrl ? `http://localhost:5000${project.imageUrl}` : 'https://via.placeholder.com/600x400'} 
+                      src={project.imageUrl ? `${API_URL}${project.imageUrl}` : 'https://via.placeholder.com/600x400'} 
                       alt={project.title} 
                     />
                     <div className="project-overlay">
@@ -255,7 +249,7 @@ const Home = () => {
           )}
           
           {!loading && featuredProjects.length === 0 && (
-            <p className="no-projects">No featured projects yet.</p>
+            <p className="no-projects">No featured projects yet. Add some in the admin panel!</p>
           )}
           
           <motion.div 
