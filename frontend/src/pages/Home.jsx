@@ -1,7 +1,9 @@
-import React, { useState, useEffect, Link } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import "./Home.css";
+import { Link } from 'react-router-dom';
+
 
 // Get API URL from environment variable
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
