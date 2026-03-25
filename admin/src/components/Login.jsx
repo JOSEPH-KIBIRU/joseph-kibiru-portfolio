@@ -25,7 +25,6 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', credentials.email);
       
       const response = await axios.post(`${API_URL}/api/login`, {
         email: credentials.email,
@@ -33,7 +32,6 @@ const Login = ({ onLogin }) => {
       });
       
       if (response.data.success) {
-        console.log('Login successful!');
         // Store token
         localStorage.setItem('adminToken', response.data.token);
         localStorage.setItem('token', response.data.token);

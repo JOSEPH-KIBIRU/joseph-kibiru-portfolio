@@ -76,9 +76,7 @@ const ProjectForm = ({ project, onClose }) => {
 
       const method = project ? 'put' : 'post';
 
-      console.log('Saving to:', url);
-      console.log('Using API_URL:', API_URL);
-
+     
       await axios({
         method,
         url,

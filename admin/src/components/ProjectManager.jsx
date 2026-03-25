@@ -146,7 +146,7 @@ const ProjectManager = ({ onLogout }) => {
                         <div className="project-preview">
                           {project.imageUrl && (
                             <img
-                              src={`${API_URL}${project.imageUrl}`}
+                              src={project.imageUrl} 
                               alt={project.title}
                               className="project-thumbnail"
                             />

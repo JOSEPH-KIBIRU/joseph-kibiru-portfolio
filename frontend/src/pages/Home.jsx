@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
-import './Home.css';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import "./Home.css";
 
 // Get API URL from environment variable
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const Home = () => {
   const [featuredProjects, setFeaturedProjects] = useState([]);
@@ -19,27 +19,26 @@ const Home = () => {
       const response = await axios.get(`${API_URL}/api/projects/featured`);
       setFeaturedProjects(response.data);
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error("Error fetching projects:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const skills = [
-    { name: 'React', level: 90 },
-    { name: 'Node.js', level: 85 },
-    { name: 'JavaScript', level: 95 },
-    { name: 'MongoDB', level: 80 },
-    { name: 'TypeScript', level: 75 },
-    { name: 'Next.js', level: 70 },
-    { name: 'PostgreSQL', level: 75 },
-    { name: 'AWS', level: 65 },
-    { name: 'Supabase', level: 90 },
+    { name: "React", level: 90 },
+    { name: "Node.js", level: 85 },
+    { name: "JavaScript", level: 95 },
+    { name: "MongoDB", level: 80 },
+    { name: "TypeScript", level: 75 },
+    { name: "Next.js", level: 70 },
+    { name: "PostgreSQL", level: 75 },
+    { name: "AWS", level: 65 },
+    { name: "Supabase", level: 90 },
   ];
 
   return (
     <div className="home">
-      
       <section className="hero">
         <div className="hero-content">
           <div className="hero-grid">
@@ -55,10 +54,11 @@ const Home = () => {
               </h1>
               <h2>Full Stack Developer</h2>
               <p>
-                I craft elegant, scalable web applications with modern technologies.
-                Specialized in React, Node.js, and cloud architecture.
+                I craft elegant, scalable web applications with modern
+                technologies. Specialized in React, Node.js, and cloud
+                architecture.
               </p>
-              
+
               <motion.div
                 className="hero-stats"
                 initial={{ opacity: 0, y: 20 }}
@@ -87,11 +87,25 @@ const Home = () => {
               >
                 <a href="/projects" className="btn primary">
                   <span>View My Work</span>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M5 12H19M19 12L12 5M19 12L12 19"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </a>
-                <a href="/contact" className="btn secondary">Let's Talk</a>
+                <a href="/contact" className="btn secondary">
+                  Let's Talk
+                </a>
               </motion.div>
             </motion.div>
 
@@ -103,9 +117,9 @@ const Home = () => {
             >
               <div className="image-wrapper">
                 <div className="image-glow"></div>
-                <img 
-                  src="/profile.jpeg" 
-                  alt="Joseph Kibiru" 
+                <img
+                  src="/profile.jpeg"
+                  alt="Joseph Kibiru"
                   className="profile-image"
                 />
                 <div className="image-border"></div>
@@ -118,7 +132,7 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <motion.div 
+          <motion.div
             className="hero-scroll"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -158,7 +172,7 @@ const Home = () => {
                   <span className="skill-percentage">{skill.level}%</span>
                 </div>
                 <div className="skill-bar">
-                  <motion.div 
+                  <motion.div
                     className="skill-progress"
                     initial={{ width: 0 }}
                     whileInView={{ width: `${skill.level}%` }}
@@ -183,7 +197,7 @@ const Home = () => {
             <h2>Featured Projects</h2>
             <p>Some of my best work</p>
           </motion.div>
-          
+
           {loading ? (
             <div className="loading-container">
               <div className="loading-spinner"></div>
@@ -201,35 +215,29 @@ const Home = () => {
                   whileHover={{ y: -10 }}
                 >
                   <div className="project-image">
-                    <img 
-                      src={project.imageUrl ? `${API_URL}${project.imageUrl}` : 'https://via.placeholder.com/600x400'} 
-                      alt={project.title} 
+                    <img
+                      src={project.imageUrl || "/placeholder.jpg"}
+                      alt={project.title}
                     />
                     <div className="project-overlay">
                       {project.liveUrl && (
-                        <a 
-                          href={project.liveUrl} 
-                          target="_blank" 
+                        <a
+                          href={project.liveUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="project-link"
                         >
                           <span>Live Demo</span>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
                         </a>
                       )}
                       {project.githubUrl && (
-                        <a 
-                          href={project.githubUrl} 
-                          target="_blank" 
+                        <a
+                          href={project.githubUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="project-link"
                         >
                           <span>GitHub</span>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
                         </a>
                       )}
                     </div>
@@ -238,8 +246,10 @@ const Home = () => {
                     <h3>{project.title}</h3>
                     <p>{project.description}</p>
                     <div className="technologies">
-                      {project.technologies?.map(tech => (
-                        <span key={tech} className="tech-tag">{tech}</span>
+                      {project.technologies?.map((tech) => (
+                        <span key={tech} className="tech-tag">
+                          {tech}
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -247,18 +257,22 @@ const Home = () => {
               ))}
             </div>
           )}
-          
+
           {!loading && featuredProjects.length === 0 && (
-            <p className="no-projects">No featured projects yet. Add some in the admin panel!</p>
+            <p className="no-projects">
+              No featured projects yet. Add some in the admin panel!
+            </p>
           )}
-          
-          <motion.div 
+
+          <motion.div
             className="view-all"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <a href="/projects" className="btn secondary">View All Projects</a>
+            <a href="/projects" className="btn secondary">
+              View All Projects
+            </a>
           </motion.div>
         </div>
       </section>
