@@ -19,22 +19,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configure Cloudinary storage for multer
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'portfolio-projects',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [
-      { width: 1200, height: 800, crop: 'limit' },
-      { quality: 'auto' }
-    ],
-    format: async (req, file) => 'webp' // Convert to webp
-  }
-});
+// Configure multer for memory storage (temporary)
+const multerStorage = multer.memoryStorage();
 
 const upload = multer({ 
-  storage: storage,
+  storage: multerStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
@@ -48,6 +37,39 @@ const upload = multer({
   }
 });
 
+// Helper function to upload to Cloudinary
+const uploadToCloudinary = async (fileBuffer, folder = 'portfolio-projects') => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        transformation: [
+          { width: 1200, height: 800, crop: 'limit' },
+          { quality: 'auto' }
+        ],
+        format: 'webp'
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+};
+
+// Helper function to delete image from Cloudinary
+const deleteCloudinaryImage = async (publicId) => {
+  if (publicId) {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+      console.log('Deleted image from Cloudinary:', publicId);
+    } catch (error) {
+      console.error('Error deleting image from Cloudinary:', error);
+    }
+  }
+};
+
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
@@ -60,23 +82,15 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    
-    // Remove trailing slash for comparison
     const cleanOrigin = origin.replace(/\/$/, '');
-    
-    // Check if origin is allowed
     if (allowedOrigins.indexOf(cleanOrigin) !== -1 || 
         allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    
-    // In development, allow all
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    
     console.log('CORS blocked origin:', origin);
     return callback(new Error('CORS policy does not allow access from this origin'), false);
   },
@@ -85,22 +99,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Handle preflight requests
 app.options('*', cors());
-
 app.use(express.json());
-
-// Create uploads directory for fallback (optional)
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-}
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio';
-
-console.log('MongoDB URI exists:', !!MONGODB_URI);
-console.log('Cloudinary configured:', !!process.env.CLOUDINARY_CLOUD_NAME);
-console.log('Cloudinary cloud name:', process.env.CLOUDINARY_CLOUD_NAME);
 
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
@@ -159,18 +162,6 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Helper function to delete image from Cloudinary
-const deleteCloudinaryImage = async (publicId) => {
-  if (publicId) {
-    try {
-      await cloudinary.uploader.destroy(publicId);
-      console.log('Deleted image from Cloudinary:', publicId);
-    } catch (error) {
-      console.error('Error deleting image from Cloudinary:', error);
-    }
-  }
-};
-
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
@@ -180,15 +171,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Test endpoint to check environment variables
 app.get('/api/test-env', (req, res) => {
   res.json({
     mongoExists: !!process.env.MONGODB_URI,
     jwtExists: !!process.env.JWT_SECRET,
     adminEmailExists: !!process.env.ADMIN_EMAIL,
     cloudinaryExists: !!process.env.CLOUDINARY_CLOUD_NAME,
-    cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME,
-    frontendUrl: process.env.FRONTEND_URL,
     nodeEnv: process.env.NODE_ENV
   });
 });
@@ -198,8 +186,6 @@ app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    console.log('Login attempt for email:', email);
-    
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
@@ -207,13 +193,11 @@ app.post('/api/login', async (req, res) => {
     const user = await User.findOne({ email });
     
     if (!user) {
-      console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      console.log('Invalid password for user:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -223,8 +207,6 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    console.log('Login successful for:', email);
-    
     res.json({ 
       token, 
       success: true,
@@ -236,10 +218,8 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Verify token endpoint
 app.get('/api/verify-token', authenticateToken, async (req, res) => {
   try {
-    console.log('Token verified for user:', req.user.email);
     res.json({ 
       valid: true, 
       user: {
@@ -249,7 +229,6 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Token verification error:', error);
     res.status(401).json({ valid: false, error: error.message });
   }
 });
@@ -257,20 +236,13 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
 // Project Routes (Public)
 app.get('/api/projects', async (req, res) => {
   try {
-    console.log('Fetching projects...');
     const { category, featured } = req.query;
     let query = {};
     
-    if (category && category !== 'all') {
-      query.category = category;
-    }
-    
-    if (featured === 'true') {
-      query.featured = true;
-    }
+    if (category && category !== 'all') query.category = category;
+    if (featured === 'true') query.featured = true;
     
     const projects = await Project.find(query).sort({ order: 1, date: -1 });
-    console.log(`Found ${projects.length} projects`);
     res.json(projects);
   } catch (error) {
     console.error('Error fetching projects:', error);
@@ -302,9 +274,10 @@ app.post('/api/admin/projects', authenticateToken, upload.single('image'), async
     }
 
     if (req.file) {
-      // Cloudinary provides the URL and public ID
-      projectData.imageUrl = req.file.path;
-      projectData.imagePublicId = req.file.filename;
+      // Upload to Cloudinary
+      const result = await uploadToCloudinary(req.file.buffer, 'portfolio-projects');
+      projectData.imageUrl = result.secure_url;
+      projectData.imagePublicId = result.public_id;
     }
 
     const project = new Project(projectData);
@@ -331,17 +304,16 @@ app.put('/api/admin/projects/:id', authenticateToken, upload.single('image'), as
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Handle image update
     if (req.file) {
-      // Delete old image from Cloudinary
+      // Delete old image
       if (project.imagePublicId) {
         await deleteCloudinaryImage(project.imagePublicId);
       }
-      // Set new image data
-      projectData.imageUrl = req.file.path;
-      projectData.imagePublicId = req.file.filename;
+      // Upload new image
+      const result = await uploadToCloudinary(req.file.buffer, 'portfolio-projects');
+      projectData.imageUrl = result.secure_url;
+      projectData.imagePublicId = result.public_id;
     } else {
-      // Keep existing image
       projectData.imageUrl = project.imageUrl;
       projectData.imagePublicId = project.imagePublicId;
     }
@@ -366,7 +338,6 @@ app.delete('/api/admin/projects/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // Delete image from Cloudinary
     if (project.imagePublicId) {
       await deleteCloudinaryImage(project.imagePublicId);
     }
@@ -394,7 +365,7 @@ app.post('/api/admin/projects/reorder', authenticateToken, async (req, res) => {
   }
 });
 
-// Create default admin user from environment variables
+// Create admin user
 async function createAdminUser() {
   try {
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -436,5 +407,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? 'Configured ✅' : 'Not configured ❌'}`);
-  console.log(`✅ Allowed origins:`, allowedOrigins);
 });
