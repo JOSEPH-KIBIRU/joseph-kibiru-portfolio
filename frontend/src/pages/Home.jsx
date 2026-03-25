@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Link } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import "./Home.css";
@@ -85,7 +85,7 @@ const Home = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                <a href="/projects" className="btn primary">
+                <Link to="/projects" className="btn primary">
                   <span>View My Work</span>
                   <svg
                     width="18"
@@ -102,10 +102,11 @@ const Home = () => {
                       strokeLinejoin="round"
                     />
                   </svg>
-                </a>
-                <a href="/contact" className="btn secondary">
+                </Link>
+
+                <Link to="/contact" className="btn secondary">
                   Let's Talk
-                </a>
+                </Link>
               </motion.div>
             </motion.div>
 
@@ -270,9 +271,8 @@ const Home = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <a href="/projects" className="btn secondary">
-              View All Projects
-            </a>
+            <Link to="/projects" className="btn secondary">View All Projects</Link>
+
           </motion.div>
         </div>
       </section>

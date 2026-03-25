@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
 import Contacts from './pages/Contacts'
@@ -18,6 +19,7 @@ function App() {
           <Route path="/contact" element={<Contacts />} />
           <Route path="/admin-login" element={<AdminLogin />} />
         </Routes>
+        <Footer />
       </div>
     </Router>
   );
