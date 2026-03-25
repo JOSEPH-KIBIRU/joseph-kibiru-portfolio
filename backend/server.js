@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -10,21 +12,54 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS configuration for production
-// Update CORS configuration
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Cloudinary storage for multer
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'portfolio-projects',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [
+      { width: 1200, height: 800, crop: 'limit' },
+      { quality: 'auto' }
+    ],
+    format: 'webp' 
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://josephkibiruportfolio.netlify.app',  // Remove trailing slash
-  'https://joseph-kibiru-admin.vercel.app'
+  'https://josephkibiruportfolio.netlify.app',
+  'https://joseph-kibiru-admin.vercel.app',
+  process.env.FRONTEND_URL,
+  process.env.ADMIN_URL
 ].filter(Boolean);
-
-console.log('Allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: function(origin, callback) {
-    console.log('Request from origin:', origin);
-    
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     
@@ -45,39 +80,42 @@ app.use(cors({
     console.log('CORS blocked origin:', origin);
     return callback(new Error('CORS policy does not allow access from this origin'), false);
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    
-    // In production, check against allowed origins
-    if (process.env.NODE_ENV === 'production') {
-      if (allowedOrigins.indexOf(origin) === -1) {
-        console.log('CORS blocked origin:', origin);
-        return callback(new Error('CORS policy does not allow access from this origin'), false);
-      }
-    }
-    return callback(null, true);
-  },
-  credentials: true
-}));
+// Handle preflight requests
+app.options('*', cors());
 
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Create uploads directory if it doesn't exist
+// Create uploads directory for fallback (optional)
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio';
-mongoose.connect(MONGODB_URI)
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+
+console.log('MongoDB URI exists:', !!MONGODB_URI);
+console.log('Cloudinary configured:', !!process.env.CLOUDINARY_CLOUD_NAME);
+
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+.then(() => {
+  console.log('✅ MongoDB connected successfully');
+  createAdminUser();
+})
+.catch(err => {
+  console.error('❌ MongoDB connection error:', err.message);
+  console.error('Please check:');
+  console.error('1. Your IP is whitelisted in MongoDB Atlas');
+  console.error('2. Username and password are correct');
+  console.error('3. Connection string is correct');
+});
 
 // User Schema
 const UserSchema = new mongoose.Schema({
@@ -94,7 +132,8 @@ const ProjectSchema = new mongoose.Schema({
   description: { type: String, required: true },
   category: { type: String, required: true },
   technologies: [{ type: String }],
-  imageUrl: String,
+  imageUrl: { type: String },
+  imagePublicId: { type: String }, // Store Cloudinary public ID for deletion
   liveUrl: String,
   githubUrl: String,
   featured: { type: Boolean, default: false },
@@ -104,35 +143,6 @@ const ProjectSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema);
 const Project = mongoose.model('Project', ProjectSchema);
-
-// File Upload Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed'));
-  }
-};
-
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: fileFilter
-});
 
 // Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -152,9 +162,37 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Helper function to delete image from Cloudinary
+const deleteCloudinaryImage = async (publicId) => {
+  if (publicId) {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+      console.log('Deleted image from Cloudinary:', publicId);
+    } catch (error) {
+      console.error('Error deleting image from Cloudinary:', error);
+    }
+  }
+};
+
 // Routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Portfolio API is running', environment: process.env.NODE_ENV });
+  res.json({ 
+    message: 'Portfolio API is running', 
+    environment: process.env.NODE_ENV,
+    cloudinary: !!process.env.CLOUDINARY_CLOUD_NAME
+  });
+});
+
+// Test endpoint to check environment variables
+app.get('/api/test-env', (req, res) => {
+  res.json({
+    mongoExists: !!process.env.MONGODB_URI,
+    jwtExists: !!process.env.JWT_SECRET,
+    adminEmailExists: !!process.env.ADMIN_EMAIL,
+    cloudinaryExists: !!process.env.CLOUDINARY_CLOUD_NAME,
+    frontendUrl: process.env.FRONTEND_URL,
+    nodeEnv: process.env.NODE_ENV
+  });
 });
 
 // Auth Routes
@@ -162,14 +200,22 @@ app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
+    console.log('Login attempt for email:', email);
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
     const user = await User.findOne({ email });
     
     if (!user) {
+      console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -179,6 +225,8 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    console.log('Login successful for:', email);
+    
     res.json({ 
       token, 
       success: true,
@@ -186,13 +234,14 @@ app.post('/api/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
 // Verify token endpoint
 app.get('/api/verify-token', authenticateToken, async (req, res) => {
   try {
+    console.log('Token verified for user:', req.user.email);
     res.json({ 
       valid: true, 
       user: {
@@ -203,13 +252,14 @@ app.get('/api/verify-token', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Token verification error:', error);
-    res.status(401).json({ valid: false, error: 'Invalid token' });
+    res.status(401).json({ valid: false, error: error.message });
   }
 });
 
 // Project Routes (Public)
 app.get('/api/projects', async (req, res) => {
   try {
+    console.log('Fetching projects...');
     const { category, featured } = req.query;
     let query = {};
     
@@ -222,10 +272,11 @@ app.get('/api/projects', async (req, res) => {
     }
     
     const projects = await Project.find(query).sort({ order: 1, date: -1 });
+    console.log(`Found ${projects.length} projects`);
     res.json(projects);
   } catch (error) {
     console.error('Error fetching projects:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -237,7 +288,7 @@ app.get('/api/projects/featured', async (req, res) => {
     res.json(projects);
   } catch (error) {
     console.error('Error fetching featured projects:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -253,7 +304,9 @@ app.post('/api/admin/projects', authenticateToken, upload.single('image'), async
     }
 
     if (req.file) {
-      projectData.imageUrl = `/uploads/${req.file.filename}`;
+      // Cloudinary provides the URL and public ID
+      projectData.imageUrl = req.file.path; // The Cloudinary URL
+      projectData.imagePublicId = req.file.filename; // The public ID for deletion
     }
 
     const project = new Project(projectData);
@@ -261,7 +314,7 @@ app.post('/api/admin/projects', authenticateToken, upload.single('image'), async
     res.status(201).json(project);
   } catch (error) {
     console.error('Error creating project:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
@@ -280,14 +333,19 @@ app.put('/api/admin/projects/:id', authenticateToken, upload.single('image'), as
       return res.status(404).json({ error: 'Project not found' });
     }
 
+    // Handle image update
     if (req.file) {
-      if (project.imageUrl) {
-        const oldImagePath = path.join(__dirname, project.imageUrl);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
+      // Delete old image from Cloudinary
+      if (project.imagePublicId) {
+        await deleteCloudinaryImage(project.imagePublicId);
       }
-      projectData.imageUrl = `/uploads/${req.file.filename}`;
+      // Set new image data
+      projectData.imageUrl = req.file.path;
+      projectData.imagePublicId = req.file.filename;
+    } else {
+      // Keep existing image
+      projectData.imageUrl = project.imageUrl;
+      projectData.imagePublicId = project.imagePublicId;
     }
 
     const updatedProject = await Project.findByIdAndUpdate(
@@ -299,7 +357,7 @@ app.put('/api/admin/projects/:id', authenticateToken, upload.single('image'), as
     res.json(updatedProject);
   } catch (error) {
     console.error('Error updating project:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
@@ -310,18 +368,16 @@ app.delete('/api/admin/projects/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    if (project.imageUrl) {
-      const imagePath = path.join(__dirname, project.imageUrl);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    // Delete image from Cloudinary
+    if (project.imagePublicId) {
+      await deleteCloudinaryImage(project.imagePublicId);
     }
 
     await Project.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
     console.error('Error deleting project:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
@@ -336,7 +392,7 @@ app.post('/api/admin/projects/reorder', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Error reordering projects:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
@@ -380,8 +436,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? 'Configured ✅' : 'Not configured ❌'}`);
   console.log(`✅ Allowed origins:`, allowedOrigins);
-  createAdminUser();
 });
