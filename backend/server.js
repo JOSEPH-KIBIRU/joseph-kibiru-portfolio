@@ -62,7 +62,6 @@ const deleteCloudinaryImage = async (publicId) => {
   if (publicId) {
     try {
       await cloudinary.uploader.destroy(publicId);
-      console.log('Deleted image from Cloudinary:', publicId);
     } catch (error) {
       console.error('Error deleting image from Cloudinary:', error);
     }
@@ -90,7 +89,6 @@ app.use(cors({
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    console.log('CORS blocked origin:', origin);
     return callback(new Error('CORS policy does not allow access from this origin'), false);
   },
   credentials: true,
@@ -108,7 +106,6 @@ mongoose.connect(MONGODB_URI, {
   socketTimeoutMS: 45000,
 })
 .then(() => {
-  console.log('✅ MongoDB connected successfully');
   createAdminUser();
 })
 .catch(err => {
@@ -370,7 +367,6 @@ async function createAdminUser() {
     const adminPassword = process.env.ADMIN_PASSWORD;
     
     if (!adminEmail || !adminPassword) {
-      console.log('⚠️  Admin credentials not set in .env file');
       return;
     }
 
@@ -384,9 +380,7 @@ async function createAdminUser() {
         password: hashedPassword,
         isAdmin: true
       });
-      console.log('✅ Admin user created with email:', adminEmail);
     } else {
-      console.log('✅ Admin user already exists');
     }
   } catch (error) {
     console.error('Error creating admin user:', error);
@@ -402,7 +396,4 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME ? 'Configured ✅' : 'Not configured ❌'}`);
 });
