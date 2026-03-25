@@ -2,8 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -29,7 +29,7 @@ const storage = new CloudinaryStorage({
       { width: 1200, height: 800, crop: 'limit' },
       { quality: 'auto' }
     ],
-    format: 'webp' 
+    format: async (req, file) => 'webp' // Convert to webp
   }
 });
 
@@ -100,6 +100,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfo
 
 console.log('MongoDB URI exists:', !!MONGODB_URI);
 console.log('Cloudinary configured:', !!process.env.CLOUDINARY_CLOUD_NAME);
+console.log('Cloudinary cloud name:', process.env.CLOUDINARY_CLOUD_NAME);
 
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
@@ -111,10 +112,6 @@ mongoose.connect(MONGODB_URI, {
 })
 .catch(err => {
   console.error('❌ MongoDB connection error:', err.message);
-  console.error('Please check:');
-  console.error('1. Your IP is whitelisted in MongoDB Atlas');
-  console.error('2. Username and password are correct');
-  console.error('3. Connection string is correct');
 });
 
 // User Schema
@@ -133,7 +130,7 @@ const ProjectSchema = new mongoose.Schema({
   category: { type: String, required: true },
   technologies: [{ type: String }],
   imageUrl: { type: String },
-  imagePublicId: { type: String }, // Store Cloudinary public ID for deletion
+  imagePublicId: { type: String },
   liveUrl: String,
   githubUrl: String,
   featured: { type: Boolean, default: false },
@@ -190,6 +187,7 @@ app.get('/api/test-env', (req, res) => {
     jwtExists: !!process.env.JWT_SECRET,
     adminEmailExists: !!process.env.ADMIN_EMAIL,
     cloudinaryExists: !!process.env.CLOUDINARY_CLOUD_NAME,
+    cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME,
     frontendUrl: process.env.FRONTEND_URL,
     nodeEnv: process.env.NODE_ENV
   });
@@ -305,8 +303,8 @@ app.post('/api/admin/projects', authenticateToken, upload.single('image'), async
 
     if (req.file) {
       // Cloudinary provides the URL and public ID
-      projectData.imageUrl = req.file.path; // The Cloudinary URL
-      projectData.imagePublicId = req.file.filename; // The public ID for deletion
+      projectData.imageUrl = req.file.path;
+      projectData.imagePublicId = req.file.filename;
     }
 
     const project = new Project(projectData);
